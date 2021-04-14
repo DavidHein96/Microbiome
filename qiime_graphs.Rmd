@@ -1,0 +1,134 @@
+---
+title: "qiime"
+author: "Dave Hein"
+date: "1/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+# Bar plot of relative abundance
+```{r}
+
+#Data cleaning
+df<- data_for_abundance2%>%rename("Other Actinobacteria Families"="Other.Actinobacteria",
+                                 "Other Bacteroidetes Families"= "Other.Bacteroidetes",
+                                 "Other Non-Clostridial Firmicute Families"="Other.Non.Clostridial.Firmicutes",
+                                 "Other Clostridial Firmicute Families"="Other.Clostridia",
+                                 "Other Bacteria"="Other.Bacteria")%>%
+                          pivot_longer(cols = c("Bifidobacteriaceae",
+                                                "Other Actinobacteria Families",
+                                                "Bacteroidaceae",
+                                                "Prevotellaceae",
+                                                "Other Bacteroidetes Families",
+                                                "Other Non-Clostridial Firmicute Families",
+                                                "Ruminococcaceae",
+                                                "Lachnospiraceae",
+                                                "Peptostreptococcaceae",
+                                                "Other Clostridial Firmicute Families",
+                                                "Fusobacteriaceae",
+                                                "Other Bacteria"))%>% 
+                          rename(Bacteria_Family=name,Relative_Abundance=value)%>%
+                          mutate(Bacteria_Family=as.factor(Bacteria_Family))
+
+
+#Assigning the order that the families will appear in the plot
+df$Bacteria_Family<-factor(df$Bacteria_Family,levels=c(
+
+                                                "Bifidobacteriaceae",
+                                                "Other Actinobacteria Families",
+
+                                                "Prevotellaceae",
+                                                "Bacteroidaceae",
+                                                "Other Bacteroidetes Families",
+                                                
+                                                "Other Non-Clostridial Firmicute Families",
+
+                                                "Lachnospiraceae",
+                                                "Ruminococcaceae",
+                                                "Peptostreptococcaceae",
+                                                "Other Clostridial Firmicute Families",
+                                          
+                                                "Fusobacteriaceae",
+                                                
+                                                "Other Bacteria"
+                                                ))
+
+
+#Assigning the order the pts appear in the plot
+df$ID<-factor(df$ID,levels=c("P1","P2","P4","P9","P3","P5","P6","P7","P11","P12","P14"))
+
+#Making bar plot
+ggplot(df, aes(fill=Bacteria_Family, y=Relative_Abundance, x=ID)) + 
+    geom_bar(position="fill", stat="identity",width=0.6)+
+    scale_fill_manual(values=c(
+                                
+                              #yellow
+                              "Other Actinobacteria Families" = "#FFE500",
+                              "Bifidobacteriaceae" = "#DBC500",
+
+                              #Green
+                              "Other Bacteroidetes Families" = "#82c273",
+                              "Bacteroidaceae" = "#4a883f",
+                              "Prevotellaceae" = "#0d520d",
+                               
+                              #Light blue 
+                              "Other Non-Clostridial Firmicute Families" = "#A2B5FF",
+
+                              #Magenta 
+                              "Other Clostridial Firmicute Families" = "#ffcfff",
+                              "Ruminococcaceae" = "#a76a92",
+                              "Peptostreptococcaceae" = "#d39bc7",
+                              "Lachnospiraceae" = "#520a30",
+                               
+                              #Dark Blue
+                              "Fusobacteriaceae" = "#102f6b",
+                               
+                              #orange
+                              "Other Bacteria" = "#FF9C70"))+
+  xlab("Patient ID")+
+  ylab("Relative Abundance")+
+  theme_classic()+
+  ggtitle("Bacterial Family Composition")+
+  theme(text=element_text(family="Times New Roman") )
+
+ggsave(plot=last_plot(), height = 6, width = 10,filename = "fig.png")
+
+
+
+
+```
+
+
+
+# Making the horizontal bar chart of lefse values
+```{r}
+#data cleaning
+lefse <- lefse_values_graph%>%mutate(taxon=as.factor(taxon),group=as.factor(group))%>%rename(Response=group)
+
+#graphing
+ggplot(lefse, aes(fill=Response, y=LDA, x=reorder(taxon,LDA))) + 
+  geom_bar(stat="identity")+coord_flip()+xlab("")+ylab("LDA SCORE (log 10)")+
+  scale_fill_manual(values=c("Complete/Near Complete" = "#27CDDB","Partial" = "#A268D1")) +
+  scale_y_continuous(breaks=c(-4.8,-3.6,-2.4,-1.2,0.0,1.2,2.4,3.6,4.8))+theme_bw()+ 
+  
+  theme(text=element_text(family="Times New Roman"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  
+  #the reason there is a taxon2 and taxon3 names is so that one set can be left justified and one can be right justified in respect to its bar,that is what the code hjust="inward/outward" does
+  geom_text(aes(label=taxon2),family="Times New Roman",hjust="inward",y=.05)+
+  geom_text(aes(label=taxon3),family="Times New Roman",hjust="outward",y=-.05)+
+  theme(legend.position="bottom")
+
+
+ggsave(plot=last_plot(), height = 4, width = 6,filename = "fig2.png")
+
+```
+
